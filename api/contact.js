@@ -30,7 +30,7 @@ module.exports = async (req, res) => {
 
     await transporter.sendMail({
       from: process.env.GMAIL_EMAIL,
-      to: 'musaratechnologies@gmail.com',
+      to: 'musaratechologies@gmail.com',
       replyTo: email,
       subject: `New Contact Form Submission: ${subject}`,
       text:
