@@ -108,3 +108,48 @@ const io = new IntersectionObserver((entries) => {
   });
 }, { threshold: 0.12 });
 revealEls.forEach(el => io.observe(el));
+
+// Counting animation for stats
+function animateCounter(element, target, duration = 2000) {
+  const start = 0;
+  const increment = target / (duration / 16);
+  let current = start;
+  
+  const timer = setInterval(() => {
+    current += increment;
+    if (current >= target) {
+      element.textContent = target + '+';
+      clearInterval(timer);
+    } else {
+      element.textContent = Math.floor(current);
+    }
+  }, 16);
+}
+
+// Observe stats for counting animation
+document.addEventListener('DOMContentLoaded', () => {
+  const statNumbers = document.querySelectorAll('.hero-stats .num[data-target], .section-stat .num[data-target]');
+  const statsObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const target = parseInt(entry.target.getAttribute('data-target'));
+        if (!isNaN(target) && target > 0) {
+          animateCounter(entry.target, target);
+          statsObserver.unobserve(entry.target);
+        }
+      }
+    });
+  }, { threshold: 0.1 });
+
+  statNumbers.forEach(num => statsObserver.observe(num));
+  
+  // Fallback: trigger animation after 3 seconds if observer hasn't triggered
+  setTimeout(() => {
+    statNumbers.forEach(num => {
+      const target = parseInt(num.getAttribute('data-target'));
+      if (!isNaN(target) && target > 0 && num.textContent === '0') {
+        animateCounter(num, target);
+      }
+    });
+  }, 3000);
+});
