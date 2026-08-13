@@ -1,10 +1,3 @@
-// Vercel serverless function — handles POST /api/contact
-// Sends the submission straight to your inbox via Gmail SMTP.
-// Requires two environment variables set in the Vercel dashboard:
-//   GMAIL_EMAIL         — the Gmail address to send from
-//   GMAIL_APP_PASSWORD  — a Gmail App Password (not your normal password)
-// See: https://myaccount.google.com/apppasswords
-
 const nodemailer = require('nodemailer');
 
 module.exports = async (req, res) => {
