@@ -25,6 +25,8 @@
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   html{scroll-behavior:smooth;}
+  .app-page{ display:none; }
+  .app-page.is-active{ display:block; }
   @media (prefers-reduced-motion: reduce){
     html{scroll-behavior:auto;}
     *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
@@ -134,6 +136,9 @@
   .nav-links a:hover, .nav-links a:focus-visible{ 
     color:var(--white); 
     transform:translateY(-2px);
+  }
+  .nav-links a.is-active:not(.nav-cta){
+    color:var(--teal-2);
   }
   .nav-cta{
     background:var(--gold); color:var(--ink) !important;
