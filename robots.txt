@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://musaratech.vercel.app/sitemap.xml
+Sitemap: https://munyratech.vercel.app/sitemap.xml
