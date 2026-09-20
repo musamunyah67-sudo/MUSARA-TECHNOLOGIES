@@ -88,17 +88,78 @@ modalClose.addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('open')) closeModal(); });
 
-// Smooth-scroll for in-page section links
-document.querySelectorAll('a[href^="#"]:not([data-modal-title])').forEach((link) => {
+// ---- Multi-page navigation ----
+// The long single-scroll layout is split into named "pages" (.app-page[data-page]).
+// Only one page is shown at a time; nav links, footer links and in-page CTA
+// buttons all route through showPage() instead of scrolling.
+const pages = document.querySelectorAll('.app-page');
+const pageKeys = Array.from(pages).map(p => p.getAttribute('data-page'));
+const navAnchorLinks = document.querySelectorAll('a[href^="#"]:not([data-modal-title])');
+
+function animateRevealsIn(container) {
+  container.querySelectorAll('.reveal:not(.in)').forEach(el => el.classList.add('in'));
+}
+
+function triggerCounters(container) {
+  container.querySelectorAll('.num[data-target]').forEach(num => {
+    const target = parseInt(num.getAttribute('data-target'));
+    if (!isNaN(target) && target > 0 && !num.hasAttribute('data-counted')) {
+      num.setAttribute('data-counted', 'true');
+      animateCounter(num, target);
+    }
+  });
+}
+
+function showPage(key, options = {}) {
+  const { updateHash = true, scrollTop = true } = options;
+  if (!pageKeys.includes(key)) key = 'home';
+
+  pages.forEach(p => p.classList.toggle('is-active', p.getAttribute('data-page') === key));
+
+  document.querySelectorAll('.nav-links a, .footer-grid a').forEach(a => {
+    const href = a.getAttribute('href') || '';
+    a.classList.toggle('is-active', href === '#' + key);
+  });
+
+  const activePage = document.getElementById('page-' + key);
+  if (activePage) {
+    animateRevealsIn(activePage);
+    triggerCounters(activePage);
+  }
+
+  if (scrollTop) window.scrollTo({ top: 0, behavior: 'instant' in document.documentElement.style ? 'instant' : 'auto' });
+  if (updateHash && location.hash.slice(1) !== key) {
+    history.pushState({ page: key }, '', '#' + key);
+  }
+  navLinks.classList.remove('open');
+}
+
+navAnchorLinks.forEach((link) => {
   link.addEventListener('click', (e) => {
     const id = link.getAttribute('href').slice(1);
     if (!id) return;
-    const target = document.getElementById(id);
-    if (target) {
+    if (pageKeys.includes(id)) {
       e.preventDefault();
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      showPage(id);
+    } else {
+      const target = document.getElementById(id);
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
   });
+});
+
+window.addEventListener('popstate', () => {
+  const key = location.hash.slice(1) || 'home';
+  showPage(key, { updateHash: false });
+});
+
+// Initial page on load: honor a shared/bookmarked #hash, default to home
+document.addEventListener('DOMContentLoaded', () => {
+  const initialKey = location.hash.slice(1) || 'home';
+  showPage(initialKey, { updateHash: false, scrollTop: false });
 });
 
 const revealEls = document.querySelectorAll('.reveal');
@@ -126,14 +187,17 @@ function animateCounter(element, target, duration = 2000) {
   }, 16);
 }
 
-// Observe stats for counting animation
+// Observe stats for counting animation (covers any stat visible without a page switch,
+// e.g. scrolling further down within the active page; triggerCounters() above handles
+// the common case of stats becoming visible via page navigation)
 document.addEventListener('DOMContentLoaded', () => {
   const statNumbers = document.querySelectorAll('.hero-stats .num[data-target], .section-stat .num[data-target]');
   const statsObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      if (entry.isIntersecting) {
+      if (entry.isIntersecting && !entry.target.hasAttribute('data-counted')) {
         const target = parseInt(entry.target.getAttribute('data-target'));
         if (!isNaN(target) && target > 0) {
+          entry.target.setAttribute('data-counted', 'true');
           animateCounter(entry.target, target);
           statsObserver.unobserve(entry.target);
         }
@@ -142,14 +206,4 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { threshold: 0.1 });
 
   statNumbers.forEach(num => statsObserver.observe(num));
-  
-  // Fallback: trigger animation after 3 seconds if observer hasn't triggered
-  setTimeout(() => {
-    statNumbers.forEach(num => {
-      const target = parseInt(num.getAttribute('data-target'));
-      if (!isNaN(target) && target > 0 && num.textContent === '0') {
-        animateCounter(num, target);
-      }
-    });
-  }, 3000);
 });
